@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Worker Dashboard - Local Job Finder</title>
+
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: #09bbc8;
+      margin: 0;
+    }
+
+    .navbar {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #dfe3ee;
+      padding: 15px 25px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .navbar h2 {
+      margin: 0;
+      color: #333;
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .logout-btn {
+      background: #ff4b4b;
+      color: white;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .dashboard-container {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .dashboard-section {
+      background: white;
+      padding: 22px;
+      margin-bottom: 25px;
+      border-radius: 14px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+      border-left: 4px solid transparent;
+    }
+
+    .dashboard-section:hover {
+      transform: translateY(-3px);
+      border-left: 4px solid #007bff;
+    }
+
+    .job-card {
+      background: #eef3ff;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      border-left: 4px solid #007bff;
+    }
+
+    .job-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .job-desc {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .btn-row {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .accept-btn {
+      background: #28a745;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .reject-btn {
+      background: #dc3545;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <h2 id="workerNameDisplay">🔧 Worker Dashboard</h2>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </nav>
+
+  <div class="dashboard-container">
+
+    <!-- Available Jobs -->
+    <section class="dashboard-section">
+      <h3>📍 Available Jobs</h3>
+      <div id="availableJobs"></div>
+    </section>
+
+    <!-- Accepted Jobs -->
+    <section class="dashboard-section">
+      <h3>✅ My Accepted Jobs</h3>
+      <div id="acceptedJobs"></div>
+    </section>
+
+    <section class="dashboard-section">
+  <h3>✔️ Completed Jobs</h3>
+  <div id="completedJobs"></div>
+</section>
+
+
+  </div>
+
+<script>
+const backendURL = "http://127.0.0.1:5000";
+
+// Show worker name
+window.onload = function () {
+  const name = localStorage.getItem("workerName");
+  document.getElementById("workerNameDisplay").innerHTML = `🔧 ${name} - Worker Dashboard`;
+
+  loadJobs();
+  loadAcceptedJobs();
+};
+
+// Logout
+function logout() {
+  localStorage.clear();
+  window.location.href = "index.html";
+}
+
+/* Load Available Jobs */
+function loadJobs() {
+  fetch(`${backendURL}/get_jobs_new`)
+    .then(res => res.json())
+    .then(jobs => {
+
+      const workerId = localStorage.getItem("userId");
+
+      // 🔥 FILTER: show only jobs with status = Open
+      jobs = jobs.filter(j => j.status === "Open");
+
+      const jobList = document.getElementById("availableJobs");
+      jobList.innerHTML = "";
+
+      jobs.forEach(job => {
+
+        const postedAgo = timeAgoGMT(job.created_at);
+
+        console.log(job.created_at)
+console.log(timeAgoGMT(job.created_at))
+
+
+        const card = document.createElement("div");
+        card.className = "job-card";
+
+        card.innerHTML = `
+          <div class="job-title">${job.job_title}
+            <span style="color:#007bff">(${job.employer_name})</span>
+          </div>
+
+          <div class="job-desc">${job.job_description}</div>
+
+          <div><b>📍 Location:</b> ${job.job_location}</div>
+
+          <div style="font-size:12px;color:#444;margin-top:5px;">
+            ⏱ Posted: ${postedAgo}
+          </div>
+
+          <div class="btn-row">
+            <button class="accept-btn" onclick="acceptJob(${job.id})">Accept</button>
+            <button class="reject-btn" onclick="rejectJob(${job.id})">Reject</button>
+          </div>
+        `;
+
+        jobList.appendChild(card);
+      });
+    });
+}
+
+
+/* ACCEPT job */
+function acceptJob(jobId) {
+  const workerId = localStorage.getItem("userId");
+  const workerName = localStorage.getItem("workerName");
+
+  fetch(`${backendURL}/accept_job`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ job_id: jobId, worker_id: workerId, worker_name: workerName })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("Job Accepted!");
+    loadJobs();
+    loadAcceptedJobs();
+  });
+}
+
+/* REJECT job */
+function rejectJob(jobId) {
+  fetch(`${backendURL}/reject_job`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ job_id: jobId })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("Job Rejected!");
+    loadJobs();
+  });
+}
+
+/* Load Accepted Jobs */
+/* Load Accepted Jobs */
+function loadAcceptedJobs() {
+  const workerId = localStorage.getItem("userId");
+
+  fetch(`${backendURL}/get_accepted_jobs_new/${workerId}`)
+    .then(res => res.json())
+    .then(jobs => {
+      const acceptedDiv = document.getElementById("acceptedJobs");
+      acceptedDiv.innerHTML = "";
+
+      jobs.forEach(job => {
+
+        const acceptedAgo = timeAgoGMT(job.accepted_at);
+
+        const card = document.createElement("div");
+        card.className = "job-card";
+
+        card.innerHTML = `
+          <div class="job-title">${job.job_title}</div>
+          <div class="job-desc">${job.job_description}</div>
+          <div><b>📍 Location:</b> ${job.job_location}</div>
+
+          <div style="font-size:12px;margin-top:4px;color:#555;">
+            ⏱ Accepted: ${acceptedAgo}
+          </div>
+
+          <button class="accept-btn" style="margin-top:10px;"
+            onclick="markCompleted(${job.id})">
+            Mark as Completed
+          </button>
+        `;
+
+        acceptedDiv.appendChild(card);
+      });
+    });
+}
+
+
+function markCompleted(jobId) {
+  fetch(`${backendURL}/complete_job`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ job_id: jobId })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert("Job marked as completed!");
+    loadJobs();          // Refresh available jobs
+    loadAcceptedJobs();  // Refresh accepted jobs
+  });
+}
+
+
+/* TIME AGO FUNCTION */
+function timeAgoGMT(gmtString) {
+  if (!gmtString) return "Just now";
+
+  const date = new Date(gmtString.replace(" ", "T")); // FIX PARSING
+
+  if (isNaN(date.getTime())) return "Just now";
+
+  const now = new Date();
+  const diffMs = now - date;
+
+  const sec = Math.floor(diffMs / 1000);
+  const min = Math.floor(sec / 60);
+  const hrs = Math.floor(min / 60);
+  const days = Math.floor(hrs / 24);
+
+  if (sec < 60) return "Just now";
+  if (min < 60) return `${min} minutes ago`;
+  if (hrs < 24) return `${hrs} hours ago`;
+  return `${days} days ago`;
+}
+
+
+function loadCompletedJobs() {
+  const workerId = localStorage.getItem("userId");
+
+  fetch(`${backendURL}/get_completed_jobs/${workerId}`)
+    .then(res => res.json())
+    .then(jobs => {
+      const box = document.getElementById("completedJobs");
+      box.innerHTML = "";
+
+      jobs.forEach(job => {
+
+        const completedAgo = timeAgoGMT(job.completed_at);
+
+        const card = document.createElement("div");
+        card.className = "job-card";
+
+        card.innerHTML = `
+          <div class="job-title">${job.job_title}</div>
+          <div class="job-desc">${job.job_description}</div>
+          <div><b>📍 Location:</b> ${job.job_location}</div>
+
+          <div style="font-size:12px;margin-top:4px;color:#0a7f00;">
+            ✔️ Completed: ${completedAgo}
+          </div>
+        `;
+
+        box.appendChild(card);
+      });
+    });
+}
+
+
+window.onload = function () {
+  const name = localStorage.getItem("workerName");
+  document.getElementById("workerNameDisplay").innerHTML = `🔧 ${name} - Worker Dashboard`;
+
+  loadJobs();
+  loadAcceptedJobs();
+  loadCompletedJobs();   // 🔥 add this
+};
+
+
+function markCompleted(jobId) {
+  fetch(`${backendURL}/complete_job`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ job_id: jobId })
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("Job marked as completed!");
+    loadJobs();
+    loadAcceptedJobs();
+    loadCompletedJobs();  // 🔥 add this
+  });
+}
+
+</script>
+
+
+</body>
+</html>  

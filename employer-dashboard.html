@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Employer Dashboard - Local Job Finder</title>
+
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      background: #09bbc8;
+    }
+
+    .navbar {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #dfe3ee;
+      padding: 15px 25px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .navbar h2 {
+      margin: 0;
+      color: #333;
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .logout-btn {
+      background: #ff4b4b;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .dashboard-container {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .dashboard-section {
+      background: white;
+      padding: 22px;
+      margin-bottom: 25px;
+      border-radius: 14px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+      border-left: 4px solid transparent;
+      transition: 0.3s;
+    }
+
+    .dashboard-section:hover {
+      transform: translateY(-3px);
+      border-left: 4px solid #007bff;
+    }
+
+    h3 {
+      margin: 0 0 15px;
+      color: #222;
+      font-size: 20px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d0d0d0;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+
+    .action-btn {
+      background: #007bff;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+    }
+
+    .list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .list li {
+      background: #eef3ff;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      border-left: 4px solid #007bff;
+    }
+
+    #map {
+      width: 100%;
+      height: 350px;
+      border-radius: 14px;
+      background: #d9d9d9;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <h2 id="empNameDisplay">👷 Employer Dashboard</h2>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </nav>
+
+  <main class="dashboard-container">
+
+    <!-- Post New Job -->
+    <section class="dashboard-section">
+      <h3>📢 Post a New Job</h3>
+      <div class="form-group">
+        <!-- <input type="text" id="jobTitle" placeholder="Job Title (e.g., Painter)"> -->
+         <select id="jobTitle" style="
+  width:100%; 
+  padding:12px; 
+  border:1px solid #d0d0d0; 
+  border-radius:10px; 
+  margin-bottom:12px; 
+  font-size:15px;
+">
+  <option value="">-- Select Job Title --</option>
+  <option value="Painter">Painter</option>
+  <option value="Electrician">Electrician</option>
+  <option value="Plumber">Plumber</option>
+  <option value="Carpenter">Carpenter</option>
+  <option value="AC Mechanic">AC Mechanic</option>
+  <option value="Welder">Welder</option>
+  <option value="Driver">Driver</option>
+  <option value="Tile Worker">Tile Worker</option>
+  <option value="Mason">Mason</option>
+  <option value="Gardener">Gardener</option>
+  <option value="House Cleaning">House Cleaning</option>
+</select>
+
+        <textarea id="jobDescription" placeholder="Enter job details..."></textarea>
+        <!-- <input type="text" id="jobLocation" placeholder="Job Location"> -->
+         <div class="autocomplete-container" style="position:relative;">
+  <input 
+    type="text" 
+    id="jobLocation" 
+    placeholder="Enter Location..."
+    oninput="showLocationSuggestions(this.value)"
+    style="
+      width:100%;
+      padding:12px;
+      border:1px solid #d0d0d0;
+      border-radius:10px;
+      margin-bottom:0px;
+      font-size:15px;
+    "
+  />
+
+  <div id="locationSuggestions" 
+    style="
+      position:absolute;
+      top:100%;
+      left:0;
+      width:100%;
+      background:white;
+      border:1px solid #ccc;
+      border-top:none;
+      border-radius:0 0 10px 10px;
+      max-height:200px;
+      overflow-y:auto;
+      display:none;
+      z-index:99;
+    ">
+  </div>
+</div>
+
+        <button class="action-btn" onclick="postJob()">Post Job</button>
+      </div>
+    </section>
+
+    <!-- Posted Jobs -->
+    <section class="dashboard-section">
+      <h3>🗂️ My Posted Jobs</h3>
+      <ul id="jobList" class="list"></ul>
+    </section>
+
+    <!-- Notifications -->
+    <section class="dashboard-section">
+      <h3>🔔 Notifications</h3>
+      <ul id="notifications" class="list"></ul>
+    </section>
+
+    <section class="dashboard-section">
+      <h3>📍 Worker Live Location</h3>
+      <div id="map"></div>
+    </section>
+
+  </main>
+
+  <!-- Google Map -->
+  <script async defer 
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCspkYhH4YVygR1_1_XAv40C9OOtLNR-SY&callback=initMap">
+  </script>
+
+  <script>
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+
+    function initMap() {
+      new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 13.0827, lng: 80.2707 },
+        zoom: 12,
+      });
+    }
+
+
+
+    // post job
+
+   function postJob() {
+  const jobTitle = document.getElementById("jobTitle").value;
+  const jobDescription = document.getElementById("jobDescription").value;
+  const jobLocation = document.getElementById("jobLocation").value;
+
+  const employerId = localStorage.getItem("userId");
+  const employerName = localStorage.getItem("employerName");
+
+  if (!jobTitle || !jobDescription || !jobLocation) {
+    alert("Please fill all fields!");
+    return;
+  }
+
+  fetch("http://127.0.0.1:5000/post_job", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      employer_id: employerId,
+      employer_name: employerName,
+      job_title: jobTitle,
+      job_description: jobDescription,
+      job_location: jobLocation
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      alert("Job Posted Successfully!");
+
+      document.getElementById("jobTitle").value = "";
+      document.getElementById("jobDescription").value = "";
+      document.getElementById("jobLocation").value = "";
+
+      loadPostedJobs(); // refresh list instantly
+    });
+}
+
+  
+function loadPostedJobs() {
+  const employerId = localStorage.getItem("userId");
+
+  fetch(`http://127.0.0.1:5000/get_posted_jobs_new/${employerId}`)
+    .then(res => res.json())
+    .then(jobs => {
+
+      const box = document.getElementById("jobList");
+      box.innerHTML = "";
+
+      jobs.forEach(job => {
+        const postedAgo = timeAgoGMT(job.created_at);
+
+        box.innerHTML += `
+          <li>
+            <b>${job.job_title}</b><br>
+            ${job.job_description}<br>
+            <b>📍 ${job.job_location}</b><br>
+
+            <span style="font-size:12px;color:#007bff;">
+              ⏱ Posted: ${postedAgo}
+            </span><br>
+
+            <span style="font-size:13px;color:#444;">
+              Status: <b>${job.status}</b>
+              ${job.worker_name 
+                 ? `<br>👨‍🔧 Accepted By: <b>${job.worker_name}</b>` 
+                 : ""}
+            </span>
+          </li>
+        `;
+      });
+    });
+}
+
+
+    /* ---------------- LOAD NOTIFICATIONS ---------------- */
+    function loadNotifications() {
+      fetch("http://127.0.0.1:5000/get_notifications/" + localStorage.getItem("userId"))
+        .then(res => res.json())
+        .then(data => {
+          const notifBox = document.getElementById("notifications");
+          notifBox.innerHTML = "";
+
+          data.forEach(n => {
+            notifBox.innerHTML += `
+              <li>${n.worker_name} accepted your job: <b>${n.job_title}</b></li>
+            `;
+          });
+        });
+    }
+
+    /* ---------------- ON PAGE LOAD ---------------- */
+   window.onload = function () {
+  const name = localStorage.getItem("employerName");
+  document.getElementById("empNameDisplay").innerHTML =
+    `👷 ${name} - Employer Dashboard`;
+
+  loadPostedJobs();
+  loadNotifications();
+};
+
+
+    // time funtion
+
+ function timeAgoGMT(gmtString) {
+  if (!gmtString) return "Just now";
+
+  const date = new Date(gmtString.replace(" ", "T")); // FIX
+
+  if (isNaN(date.getTime())) return "Just now";
+
+  const now = new Date();
+  const diffMs = now - date;
+
+  const sec = Math.floor(diffMs / 1000);
+  const min = Math.floor(sec / 60);
+  const hrs = Math.floor(min / 60);
+  const days = Math.floor(hrs / 24);
+
+  if (sec < 60) return "Just now";
+  if (min < 60) return `${min} minutes ago`;
+  if (hrs < 24) return `${hrs} hours ago`;
+  return `${days} days ago`;
+}
+
+
+const locations = [
+  "Chennai", "Tambaram", "Velachery", "T Nagar", "Anna Nagar", "Porur",
+  "Chromepet", "Medavakkam", "Avadi", "Koyambedu", "ECR", "OMR",
+  "Sholinganallur", "Adyar", "Guindy", "Ambattur", "Perambur",
+  "Mylapore", "Pallavaram", "Thiruvanmiyur"
+];
+
+
+function showLocationSuggestions(value) {
+  const box = document.getElementById("locationSuggestions");
+
+  if (!value) {
+    box.style.display = "none";
+    return;
+  }
+
+  const filtered = locations.filter(loc => 
+    loc.toLowerCase().includes(value.toLowerCase())
+  );
+
+  if (filtered.length === 0) {
+    box.style.display = "none";
+    return;
+  }
+
+  box.innerHTML = "";
+  filtered.forEach(loc => {
+    const div = document.createElement("div");
+    div.innerHTML = loc;
+    div.style.padding = "10px";
+    div.style.cursor = "pointer";
+    div.style.borderBottom = "1px solid #eee";
+
+    div.onclick = () => {
+      document.getElementById("jobLocation").value = loc;
+      box.style.display = "none";
+    };
+
+    box.appendChild(div);
+  });
+
+  box.style.display = "block";
+}
+
+
+
+
+// Auto refresh posted jobs every 3 seconds
+setInterval(() => {
+  loadPostedJobs();
+  loadNotifications();
+}, 3000);
+
+
+// if (!jobTitle) {
+//   alert("❌ Please select a job title!");
+//   return;
+// }
+
+
+
+// window.onload = function () {
+//   loadPostedJobs();
+// };
+
+
+  </script>
+
+</body>
+</html>  

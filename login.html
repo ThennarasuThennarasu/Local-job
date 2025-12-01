@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Local Job Finder - Login</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #007bff, #00c6ff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      width: 360px;
+      text-align: center;
+      animation: fadeIn 0.8s ease;
+    }
+
+    h1 { color: #007bff; font-size: 24px; }
+    h2 { color: #333; font-size: 20px; margin-bottom: 15px; }
+
+    input, select {
+      width: 90%;
+      padding: 10px;
+      margin: 7px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 95%; padding: 10px; background: #007bff;
+      color: white; border: none; border-radius: 8px;
+      font-size: 16px; cursor: pointer; margin-top: 10px;
+    }
+
+    button:hover { background: #0056b3; }
+
+    #workerExtra {
+      display: none;
+      animation: fadeIn 0.4s ease;
+      text-align: left;
+      padding-left: 15px;
+    }
+
+    label { font-size: 14px; font-weight: 600; }
+  </style>
+</head>
+
+<body>
+
+  <div class="login-container">
+    <h1>🔐 Local Job Finder</h1>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm">
+      <h2>Login</h2>
+      <input type="email" id="loginEmail" placeholder="Enter Email">
+      <input type="password" id="loginPassword" placeholder="Enter Password">
+      <button onclick="login()">Login</button>
+      <p>Don't have an account? <a href="#" onclick="showSignup()">Sign Up</a></p>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signupForm" style="display:none;">
+      <h2>Create Account</h2>
+
+      <input type="text" id="signupName" placeholder="Enter Full Name">
+      <input type="text" id="signupMobile" placeholder="Enter Mobile Number">
+      <input type="email" id="signupEmail" placeholder="Enter Email">
+      <input type="password" id="signupPassword" placeholder="Enter Password">
+
+      <select id="signupRole" onchange="showRoleFields()">
+        <option value="">🎭 Select Role</option>
+        <option value="Employer">🏢 Employer</option>
+        <option value="Worker">🔧 Worker</option>
+      </select>
+
+      <!-- WORKER EXTRA -->
+      <div id="workerExtra">
+
+        <label>Select Skills (Multiple):</label><br>
+        <label><input type="checkbox" class="skillCheck" value="Electrician"> Electrician</label><br>
+        <label><input type="checkbox" class="skillCheck" value="Plumber"> Plumber</label><br>
+        <label><input type="checkbox" class="skillCheck" value="Painter"> Painter</label><br>
+        <label><input type="checkbox" class="skillCheck" value="AC Technician"> AC Technician</label><br>
+        <label><input type="checkbox" class="skillCheck" value="Carpenter"> Carpenter</label><br><br>
+
+        <input type="number" id="workerExp" placeholder="Experience (Years)">
+        <input type="text" id="workerAadhaar" placeholder="Aadhaar Number">
+      </div>
+
+      <button onclick="signup()">Sign Up</button>
+      <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+    </div>
+  </div>
+
+  <script>
+  const backendURL = "http://127.0.0.1:5000";
+
+  function showSignup() {
+    loginForm.style.display = "none";
+    signupForm.style.display = "block";
+  }
+
+  function showLogin() {
+    signupForm.style.display = "none";
+    loginForm.style.display = "block";
+  }
+
+  function showRoleFields() {
+    const role = signupRole.value;
+    workerExtra.style.display = role === "Worker" ? "block" : "none";
+  }
+
+  // =============== SIGNUP ==================
+  async function signup() {
+    const name = signupName.value;
+    const mobile = signupMobile.value;
+    const email = signupEmail.value;
+    const password = signupPassword.value;
+    const role = signupRole.value;
+
+    let skills = [];
+    let workerExp = null;
+    let workerAadhaar = null;
+
+    // Worker → extra fields
+    if (role === "Worker") {
+      document.querySelectorAll(".skillCheck:checked").forEach(cb => {
+        skills.push(cb.value);
+      });
+
+      workerExp = document.getElementById("workerExp").value;
+      workerAadhaar = document.getElementById("workerAadhaar").value;
+    }
+
+    const body = {
+      name,
+      mobile,
+      email,
+      password,
+      role,
+      skills,
+      workerExp,
+      workerAadhaar
+    };
+
+    const res = await fetch(`${backendURL}/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    alert(data.message);
+
+    if (res.ok) {
+      showLogin();   // move to login page
+    }
+  }
+
+  // =============== LOGIN ==================
+  async function login() {
+  const email = loginEmail.value;
+  const password = loginPassword.value;
+
+  const res = await fetch(`${backendURL}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+  alert(data.message);
+
+  if (!res.ok) return;
+
+  // COMMON STORAGE
+  localStorage.setItem("userId", data.id);
+  localStorage.setItem("userRole", data.role);
+
+  // EMPLOYER
+  if (data.role === "Employer") {
+    localStorage.setItem("employerName", data.name);  // FIXED ✔
+    window.location.href = "employer-dashboard.html";
+    return;
+  }
+
+  // WORKER
+  if (data.role === "Worker") {
+    localStorage.setItem("workerName", data.name);
+    window.location.href = "worker-dashboard.html";
+  }
+}
+
+</script>
+
+</body>
+</html>

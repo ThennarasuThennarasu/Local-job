@@ -1,0 +1,170 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 60px;
+  background: #952a2a85;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo img {
+  width: 40px;
+}
+
+.logo h2 {
+  color: #0088cc;
+  font-size: 22px;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+}
+
+nav a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+nav a:hover,
+nav a.active {
+  color: #0088cc;
+}
+
+.login-btn {
+  background: #0088cc;
+  color: white;
+  padding: 8px 18px;
+  border-radius: 20px;
+}
+
+/* Hero Section */
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 60px 100px;
+  background: #f8fcff;
+  min-height: 85vh;
+}
+
+.hero-text {
+  max-width: 550px;
+}
+
+.hero-text h1 {
+  font-size: 2.8rem;
+  color: #111;
+  margin-bottom: 15px;
+  line-height: 1.3;
+}
+
+.hero-text p {
+  color: #555;
+  font-size: 1.1rem;
+  margin-bottom: 25px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.btn {
+  text-decoration: none;
+  padding: 10px 22px;
+  border-radius: 25px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.btn-primary {
+  background: #0088cc;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #006fa3;
+}
+
+.btn-outline {
+  border: 2px solid #0088cc;
+  color: #0088cc;
+}
+
+.btn-outline:hover {
+  background: #0088cc;
+  color: #fff;
+}
+
+/* Get Started Button */
+.get-started {
+  margin-top: 30px;
+}
+
+.get-started-btn {
+  text-decoration: none;
+  background: #00c6ff;
+  padding: 12px 28px;
+  border-radius: 25px;
+  color: white;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.get-started-btn:hover {
+  background: #0088cc;
+}
+
+/* Hero Image */
+.hero-image img {
+  width: 480px;
+}
+
+/* Footer */
+footer {
+  background: #ffffff;
+  text-align: center;
+  padding: 15px;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+}
+
+.footer-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.footer-content p {
+  color: #555;
+}
+
+.social-icons img {
+  width: 20px;
+  margin: 0 5px;
+  transition: 0.3s;
+}
+
+.social-icons img:hover {
+  transform: scale(1.1);
+}
